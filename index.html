@@ -2,150 +2,1086 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>App Builder Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Pro App Store Listing Builder — Shridhar Group</title>
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="description" content="Single-file, pro-level Play Store style preview and listing builder with dark mode, autosave, JSON import/export, drag-drop uploads, confetti release party, and more." />
+
+  <!--
+    SINGLE-FILE PRO EDITION
+    - Mobile-first, app-like layout
+    - Dark / Light mode with system preference + toggle
+    - Multi-step wizard (Basics → Media → Listing → Policies → Release)
+    - Live Play Store-style preview with tabs
+    - Drag & Drop uploads for icon & screenshots
+    - Autosave to localStorage, undo/redo, JSON import/export
+    - Offline placeholder images (data URIs)
+    - Feature list builder + tags
+    - Reviews generator with rating slider
+    - "Publish Demo" triggers confetti party blast + celebratory modal
+    - Print-to-PDF friendly
+    - Keyboard accessible, ARIA-labeled controls
+    - No external libraries; pure HTML/CSS/JS
+  -->
+
   <style>
+    :root {
+      --bg: #0b1220;           /* dark background */
+      --bg-soft: #111a2e;      /* cards */
+      --bg-softer: #0e1628;    /* inputs */
+      --fg: #e8eefc;           /* text */
+      --muted: #9fb0d8;        /* secondary text */
+      --brand: #2b7de9;        /* primary */
+      --brand-2: #6a9cf0;      /* secondary accents */
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --border: #25314d;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      --radius-sm: 12px;
+      --radius-lg: 22px;
+    }
+    .light {
+      --bg: #f6f8fc;
+      --bg-soft: #ffffff;
+      --bg-softer: #f0f3f9;
+      --fg: #0e1726;
+      --muted: #4e5e82;
+      --brand: #2b7de9;
+      --brand-2: #0f58c0;
+      --border: #d9e1f2;
+      --shadow: 0 10px 30px rgba(21,37,86,.12);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
     body {
-      font-family: Arial, sans-serif;
-      margin: 0; padding: 0;
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--fg);
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    /* Top App Bar */
+    .appbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
       display: flex;
-      flex-direction: row;
-      min-height: 100vh;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: env(safe-area-inset-top) 16px 16px 16px;
+      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,0)) , var(--bg);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: saturate(1.2) blur(6px);
     }
-    .form-section {
-      width: 35%;
-      padding: 20px;
-      background: #f4f4f4;
-      overflow-y: auto;
+    .brand {
+      display: flex; align-items: center; gap: 12px;
     }
-    .preview-section {
-      flex: 1;
-      padding: 20px;
-      background: #fff;
-      overflow-y: auto;
-      border-left: 2px solid #ddd;
+    .brand .logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: grid; place-items: center;
+      background: radial-gradient(80% 80% at 20% 15%, #6a9cf0, #2b7de9);
+      color: white; font-weight: 900; letter-spacing: .5px;
+      box-shadow: var(--shadow);
     }
-    label { display: block; margin: 10px 0 5px; font-weight: bold; }
-    input, textarea {
-      width: 100%; padding: 8px;
-      margin-bottom: 15px; border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      padding: 10px 15px;
-      background: #2b7de9; color: #fff;
-      border: none; border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover { background: #135abe; }
+    .brand .title { font-weight: 800; letter-spacing: .2px; }
+    .appbar-actions { display: flex; gap: 8px; align-items: center; }
 
-    /* Preview styling */
-    .app-header { display: flex; align-items: center; }
-    .app-icon {
-      width: 80px; height: 80px;
-      background: #ddd; border-radius: 20px;
-      margin-right: 15px;
-      object-fit: cover;
+    .btn {
+      appearance: none; border: none; cursor: pointer; user-select: none;
+      padding: 10px 14px; border-radius: var(--radius-sm); font-weight: 700;
+      background: var(--bg-softer); color: var(--fg);
+      border: 1px solid var(--border);
+      transition: transform .05s ease, background .2s ease, box-shadow .2s ease;
     }
-    .app-title { font-size: 1.5em; margin: 0; }
-    .developer { color: #666; font-size: 0.9em; }
-    .rating { margin: 10px 0; font-size: 0.9em; color: #444; }
-    .screenshots { display: flex; gap: 10px; margin: 15px 0; }
-    .screenshots img {
-      width: 30%; border-radius: 10px;
-      border: 1px solid #ddd;
-    }
-    .description { margin-top: 15px; line-height: 1.5; }
-    .install-btn {
-      background: #2b7de9; padding: 12px 25px;
-      color: #fff; border: none;
-      border-radius: 8px; font-weight: bold;
-      cursor: not-allowed;
-    }
-    .reviews { margin-top: 20px; }
-    .review { border-bottom: 1px solid #eee; padding: 10px 0; }
-    .review strong { display: block; }
-    .footer {
-      margin-top: 30px;
-      font-size: 0.9em;
-      color: #555;
-      padding-top: 15px;
-      border-top: 2px solid #ddd;
+    .btn:hover { box-shadow: var(--shadow); }
+    .btn:active { transform: translateY(1px) scale(.99); }
+    .btn.primary { background: linear-gradient(180deg, var(--brand), var(--brand-2)); color: white; border-color: transparent; }
+    .btn.ghost { background: transparent; }
+    .btn.success { background: linear-gradient(180deg, #27c460, #22ad55); color: #fff; border-color: transparent; }
+
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 6px 10px;
+      border-radius: 999px; background: var(--bg-softer); border: 1px solid var(--border);
+      font-size: 13px; color: var(--muted);
     }
 
-    /* Responsive */
-    @media(max-width: 768px) {
-      body { flex-direction: column; }
-      .form-section, .preview-section { width: 100%; border-left: none; }
+    /* Main two-pane layout */
+    .panes {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px; padding: 20px;
+      height: calc(100vh - 72px);
+    }
+
+    @media (max-width: 1024px) {
+      .panes { grid-template-columns: 1fr; height: auto; }
+    }
+
+    /* Left Wizard Pane */
+    .card {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .wizard {
+      display: grid; grid-template-rows: auto 1fr auto;
+      min-height: 480px;
+    }
+    .wizard-head { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .wizard-steps {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+    }
+    .step {
+      text-align: center; font-size: 12px; color: var(--muted);
+      padding: 8px; border-radius: 10px; border: 1px dashed var(--border);
+      background: var(--bg-softer);
+    }
+    .step.active { color: #fff; border-style: solid; background: linear-gradient(180deg, rgba(43,125,233,.2), rgba(43,125,233,.05)); }
+
+    .wizard-body { padding: 16px; overflow: auto; max-height: 60vh; }
+    .field { display: grid; gap: 6px; margin-bottom: 14px; }
+    .field label { font-weight: 800; font-size: 13px; color: var(--muted); }
+    .input, textarea, select { width: 100%; background: var(--bg-softer); color: var(--fg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+    textarea { min-height: 100px; resize: vertical; line-height: 1.5; }
+
+    .inline { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip { background: var(--bg-softer); border: 1px solid var(--border); color: var(--muted); padding: 6px 10px; border-radius: 999px; font-size: 12px; }
+
+    .uploader { border: 1px dashed var(--border); border-radius: 14px; padding: 14px; background: repeating-linear-gradient(45deg, transparent 0, transparent 8px, rgba(255,255,255,.02) 8px, rgba(255,255,255,.02) 16px); }
+    .uploader.drag { outline: 2px solid var(--brand); background: rgba(43,125,233,.08); }
+
+    .thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+    .thumb { position: relative; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; aspect-ratio: 9/16; background: #0b1220; }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .thumb .x { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,.55); border: 1px solid var(--border); color: #fff; border-radius: 10px; padding: 4px 6px; cursor: pointer; font-size: 12px; }
+
+    .bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+
+    .wizard-foot { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: space-between; align-items: center; }
+
+    /* Right Preview Pane */
+    .preview {
+      padding: 0; overflow: hidden; position: relative; min-height: 640px;
+      display: grid; grid-template-rows: auto 1fr;
+    }
+
+    .store-header { display: flex; gap: 14px; padding: 16px; border-bottom: 1px solid var(--border); background: var(--bg-soft); }
+    .icon {
+      width: 86px; height: 86px; border-radius: 22px; overflow: hidden; border: 1px solid var(--border); background: #101b34; flex: 0 0 auto;
+    }
+    .icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .hgroup { display: grid; gap: 6px; }
+    .title { font-size: 20px; font-weight: 900; letter-spacing: .2px; }
+    .dev { color: var(--muted); font-size: 13px; }
+    .meta { color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 10px; }
+
+    .tabs { display: flex; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--bg-soft); position: sticky; top: 0; z-index: 10; }
+    .tab { padding: 8px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--bg-softer); color: var(--muted); font-weight: 700; font-size: 13px; cursor: pointer; }
+    .tab.active { color: white; background: linear-gradient(180deg, var(--brand), var(--brand-2)); border-color: transparent; }
+
+    .store-body { overflow: auto; }
+    .section { padding: 16px; border-bottom: 1px dashed var(--border); }
+    .screens { display: grid; grid-auto-flow: column; grid-auto-columns: 240px; gap: 12px; overflow-x: auto; padding-bottom: 6px; }
+    .screen { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; aspect-ratio: 9/16; background: #0e1628; }
+    .screen img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .desc { line-height: 1.7; white-space: pre-wrap; }
+
+    .review { border-top: 1px dashed var(--border); padding: 12px 0; display: grid; grid-template-columns: 44px 1fr; gap: 10px; }
+    .avatar { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: #1a2747; border: 1px solid var(--border); font-weight: 900; }
+
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 1024px) { .about-grid { grid-template-columns: 1fr; } }
+
+    .toast { position: fixed; inset: auto 16px 16px auto; background: var(--bg-soft); color: var(--fg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; box-shadow: var(--shadow); z-index: 120; display: none; }
+
+    /* Party Blast Modal */
+    .modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(3,10,24,.65); backdrop-filter: blur(4px); z-index: 200; }
+    .modal .box { width: min(720px, 92vw); background: var(--bg-soft); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; }
+    .modal .hero { padding: 22px; background: radial-gradient(120% 120% at 20% 10%, rgba(43,125,233,.55), transparent 40%), var(--bg); border-bottom: 1px solid var(--border); display: grid; gap: 6px; }
+    .modal .hero h2 { margin: 0; }
+    .modal .body { padding: 18px; display: grid; gap: 14px; }
+
+    /* Confetti canvas */
+    #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 150; }
+
+    /* Print */
+    @media print {
+      body { background: white; color: black; }
+      .appbar, .wizard, .toast, #confetti, .modal { display: none !important; }
+      .preview { box-shadow: none; border: none; }
     }
   </style>
 </head>
 <body>
-  <div class="form-section">
-    <h2>Build Your Demo App</h2>
-    <label>App Name</label>
-    <input type="text" id="appName" placeholder="Enter app name" />
+  <!-- Top App Bar -->
+  <header class="appbar">
+    <div class="brand" aria-label="Brand">
+      <div class="logo" aria-hidden="true">SG</div>
+      <div>
+        <div class="title">Pro App Store Listing Builder</div>
+        <div class="dev" id="subtitle">Shridhar Group of Company · Made with ❤</div>
+      </div>
+    </div>
+    <div class="appbar-actions">
+      <span class="toggle" id="modeToggle" role="button" tabindex="0" aria-pressed="false">🌙 Dark</span>
+      <button class="btn ghost" id="btnUndo" title="Undo (Ctrl+Z)">↶ Undo</button>
+      <button class="btn ghost" id="btnRedo" title="Redo (Ctrl+Y)">↷ Redo</button>
+      <button class="btn" id="btnImport">Import JSON</button>
+      <button class="btn" id="btnExport">Export JSON</button>
+      <button class="btn" id="btnPrint">Print</button>
+      <button class="btn success" id="btnPublish">Publish Demo 🎉</button>
+    </div>
+  </header>
 
-    <label>Upload App Icon / Screenshot</label>
-    <input type="file" id="appImage" accept="image/*" />
+  <main class="panes">
+    <!-- Left: Wizard -->
+    <section class="card wizard" aria-label="Wizard">
+      <div class="wizard-head">
+        <div class="wizard-steps">
+          <div class="step active" data-step="0">1. Basics</div>
+          <div class="step" data-step="1">2. Media</div>
+          <div class="step" data-step="2">3. Listing</div>
+          <div class="step" data-step="3">4. Policies</div>
+          <div class="step" data-step="4">5. Release</div>
+        </div>
+        <div class="chips" id="saveState">
+          <span class="chip">Autosaved</span>
+        </div>
+      </div>
 
-    <label>App Description (500 words)</label>
-    <textarea id="appDesc" rows="8" placeholder="Enter app description"></textarea>
+      <div class="wizard-body" id="wizardBody" tabindex="0">
+        <!-- STEP 1: BASICS -->
+        <div class="step-panel" data-step="0">
+          <div class="field">
+            <label for="appName">App Name</label>
+            <input class="input" id="appName" placeholder="Enter app name" maxlength="60" />
+          </div>
+          <div class="inline">
+            <div class="field">
+              <label for="developer">Developer / Publisher</label>
+              <input class="input" id="developer" placeholder="Shridhar Group of Company" />
+            </div>
+            <div class="field">
+              <label for="packageId">Package ID</label>
+              <input class="input" id="packageId" placeholder="com.shridhar.app" />
+            </div>
+          </div>
+          <div class="inline">
+            <div class="field">
+              <label for="category">Category</label>
+              <select id="category">
+                <option>Productivity</option>
+                <option>Education</option>
+                <option>Business</option>
+                <option>Finance</option>
+                <option>Entertainment</option>
+                <option>Tools</option>
+                <option>Health & Fitness</option>
+                <option>Photography</option>
+                <option>Lifestyle</option>
+                <option>Music & Audio</option>
+                <option>Travel & Local</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="contentRating">Content Rating</label>
+              <select id="contentRating">
+                <option>Rated for 3+</option>
+                <option>Rated for 7+</option>
+                <option>Rated for 12+</option>
+                <option>Rated for 16+</option>
+                <option>Rated for 18+</option>
+              </select>
+            </div>
+          </div>
+          <div class="inline">
+            <div class="field">
+              <label for="pricing">Pricing</label>
+              <select id="pricing">
+                <option value="free" selected>Free</option>
+                <option value="paid">Paid</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="price">Price (₹)</label>
+              <input class="input" id="price" type="number" min="0" step="1" value="0" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="keywords">Keywords / Tags (comma separated)</label>
+            <input class="input" id="keywords" placeholder="notes, vtu, study, offline, pdf" />
+          </div>
+        </div>
 
-    <button onclick="generatePreview()">Generate Preview</button>
-  </div>
+        <!-- STEP 2: MEDIA -->
+        <div class="step-panel" data-step="1" hidden>
+          <div class="field">
+            <label>App Icon</label>
+            <div class="uploader" id="iconDrop">
+              <input type="file" id="iconInput" accept="image/*" aria-label="Upload app icon" />
+              <div class="row" style="margin-top:8px">
+                <button class="btn" id="btnIconCrop">Auto Square & Fit</button>
+                <button class="btn ghost" id="btnIconClear">Clear</button>
+              </div>
+              <div class="row" style="margin-top:10px">
+                <div class="icon" id="iconPreview" aria-label="Icon preview">
+                  <img id="iconImg" alt="App icon" />
+                </div>
+                <div class="chips">
+                  <span class="chip">1024×1024 recommended</span>
+                  <span class="chip">PNG/JPG/WebP</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-  <div class="preview-section" id="preview">
-    <p><i>Fill the form to see Play Store preview here...</i></p>
+          <div class="field">
+            <label>Screenshots (drag & drop up to 8)</label>
+            <div class="uploader" id="shotsDrop">
+              <input type="file" id="shotsInput" accept="image/*" multiple />
+              <div class="chips" style="margin-top:8px">
+                <span class="chip">9:16 portrait preferred</span>
+                <span class="chip">Min 3 screenshots</span>
+              </div>
+              <div class="thumbs" id="thumbs"></div>
+            </div>
+          </div>
+
+          <div class="inline">
+            <div class="field">
+              <label for="accent">Brand Accent Color</label>
+              <input class="input" id="accent" type="color" value="#2b7de9" />
+            </div>
+            <div class="field">
+              <label for="theme">Theme</label>
+              <select id="theme">
+                <option value="auto">Auto (system)</option>
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: LISTING -->
+        <div class="step-panel" data-step="2" hidden>
+          <div class="field">
+            <label for="shortDesc">Short Description</label>
+            <input class="input" id="shortDesc" maxlength="80" placeholder="One-liner that hooks the user" />
+          </div>
+          <div class="field">
+            <label for="longDesc">Full Description (aim 300–500+ words)</label>
+            <textarea id="longDesc" placeholder="Write about your app: purpose, features, privacy, performance, offline mode, etc."></textarea>
+            <div class="bar"><span id="descCount">0 words</span>
+              <div class="row">
+                <button class="btn" id="btnGenDesc">Auto-Expand ✨</button>
+                <button class="btn ghost" id="btnFormat">Format & Polish</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Top Features</label>
+            <div class="row">
+              <input class="input" id="featureInput" placeholder="Type a feature and press Add" />
+              <button class="btn" id="btnAddFeature">Add</button>
+              <button class="btn ghost" id="btnShuffle">Shuffle</button>
+              <button class="btn ghost" id="btnClearFeatures">Clear</button>
+            </div>
+            <ul id="featureList"></ul>
+          </div>
+        </div>
+
+        <!-- STEP 4: POLICIES -->
+        <div class="step-panel" data-step="3" hidden>
+          <div class="inline">
+            <div class="field">
+              <label for="privacyUrl">Privacy Policy URL</label>
+              <input class="input" id="privacyUrl" placeholder="https://example.com/privacy" />
+            </div>
+            <div class="field">
+              <label for="supportEmail">Support Email</label>
+              <input class="input" id="supportEmail" placeholder="support@example.com" />
+            </div>
+          </div>
+          <div class="inline">
+            <div class="field">
+              <label for="supportPhone">Support Phone</label>
+              <input class="input" id="supportPhone" placeholder="7483640694" />
+            </div>
+            <div class="field">
+              <label for="website">Website</label>
+              <input class="input" id="website" placeholder="https://shridhar.group" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Auto-generate Privacy Policy & License</label>
+            <div class="row">
+              <button class="btn" id="btnGenPolicy">Generate Privacy</button>
+              <button class="btn" id="btnGenLicense">Generate License</button>
+            </div>
+            <textarea id="policyText" placeholder="Generated privacy policy will appear here..."></textarea>
+            <textarea id="licenseText" placeholder="Generated license summary will appear here..."></textarea>
+          </div>
+        </div>
+
+        <!-- STEP 5: RELEASE -->
+        <div class="step-panel" data-step="4" hidden>
+          <div class="inline">
+            <div class="field">
+              <label for="version">Version</label>
+              <input class="input" id="version" placeholder="1.0.0" />
+            </div>
+            <div class="field">
+              <label for="releaseChannel">Release Channel</label>
+              <select id="releaseChannel">
+                <option>Production</option>
+                <option>Open Beta</option>
+                <option>Closed Testing</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="whatsNew">What's New</label>
+            <textarea id="whatsNew" placeholder="Highlights of this release..."></textarea>
+          </div>
+          <div class="field">
+            <label>Ratings Simulation</label>
+            <div class="row">
+              <input id="rating" type="range" min="3.5" max="5" step="0.1" value="4.6" />
+              <span id="ratingVal">4.6</span>
+              <span class="chip" id="downloadCount">10K+ downloads</span>
+            </div>
+          </div>
+          <div class="bar">
+            <div class="row">
+              <button class="btn" id="btnGenReviews">Generate Reviews</button>
+              <button class="btn ghost" id="btnClearReviews">Clear Reviews</button>
+            </div>
+            <div class="row">
+              <button class="btn primary" id="btnPreview">Generate Preview</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-foot">
+        <div class="row">
+          <button class="btn ghost" id="btnBack">◀ Back</button>
+          <button class="btn" id="btnNext">Next ▶</button>
+        </div>
+        <div class="row">
+          <button class="btn" id="btnClearAll">Clear All</button>
+          <button class="btn primary" id="btnLivePreview">Live Sync</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Live Preview -->
+    <section class="card preview" aria-label="Preview">
+      <div class="store-header">
+        <div class="icon"><img id="pvIcon" alt="App icon preview" /></div>
+        <div class="hgroup">
+          <div class="title" id="pvTitle">My Demo App</div>
+          <div class="dev" id="pvDev">Shridhar Group of Company</div>
+          <div class="meta"><span id="pvRating">⭐ 4.6</span>·<span id="pvDownloads">10K+ downloads</span>·<span id="pvAge">Rated for 3+</span></div>
+        </div>
+        <div style="margin-left:auto; align-self:center; display:flex; gap:8px;">
+          <button class="btn" id="btnInstall" aria-label="Install (disabled)">Install</button>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="overview" role="tab">Overview</button>
+        <button class="tab" data-tab="reviews" role="tab">Reviews</button>
+        <button class="tab" data-tab="about" role="tab">About</button>
+        <button class="tab" data-tab="whatsnew" role="tab">What's New</button>
+      </div>
+
+      <div class="store-body" id="storeBody">
+        <!-- OVERVIEW TAB -->
+        <div class="section" data-tabpanel="overview">
+          <div class="screens" id="pvScreens"></div>
+          <h3>About this app</h3>
+          <p class="desc" id="pvDesc"><i>Fill the wizard to generate a polished store listing. Your long description appears here.</i></p>
+          <h3>Top features</h3>
+          <ul id="pvFeatures"></ul>
+          <div class="chips" id="pvTags"></div>
+        </div>
+
+        <!-- REVIEWS TAB -->
+        <div class="section" data-tabpanel="reviews" hidden>
+          <div id="pvReviews"></div>
+        </div>
+
+        <!-- ABOUT TAB -->
+        <div class="section" data-tabpanel="about" hidden>
+          <div class="about-grid">
+            <div>
+              <h3>App info</h3>
+              <p><strong>Version:</strong> <span id="pvVersion">1.0.0</span></p>
+              <p><strong>Updated:</strong> <span id="pvUpdated"></span></p>
+              <p><strong>Package:</strong> <span id="pvPackage">com.shridhar.app</span></p>
+              <p><strong>Category:</strong> <span id="pvCategory">Productivity</span></p>
+            </div>
+            <div>
+              <h3>Developer contact</h3>
+              <p><strong>Website:</strong> <span id="pvWebsite">—</span></p>
+              <p><strong>Email:</strong> <span id="pvEmail">—</span></p>
+              <p><strong>Phone:</strong> <span id="pvPhone">—</span></p>
+              <p><strong>Privacy:</strong> <span id="pvPrivacy">—</span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- WHAT'S NEW TAB -->
+        <div class="section" data-tabpanel="whatsnew" hidden>
+          <h3>What's new</h3>
+          <p id="pvWhatsNew">Exciting launch! Performance tuned, polished UI, and a sprinkle of magic. ✨</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Confetti Canvas + Toast + Modal -->
+  <canvas id="confetti"></canvas>
+  <div class="toast" id="toast">Action complete.</div>
+
+  <div class="modal" id="partyModal" aria-hidden="true" role="dialog" aria-label="Release Party">
+    <div class="box">
+      <div class="hero">
+        <h2>🎊 Release Party Unleashed!</h2>
+        <p>Congrats! Your demo listing just went <strong>live</strong>. Time to share it with the team, take screenshots, and celebrate like a Microsoft launch. 🚀</p>
+      </div>
+      <div class="body">
+        <div class="row">
+          <button class="btn success" id="btnShare">Share Screenshot</button>
+          <button class="btn" id="btnCloseParty">Close</button>
+        </div>
+        <p style="color:var(--muted); font-size:13px">Tip: Use Export JSON to save this configuration for your next app. Autosave keeps your progress safe between sessions.</p>
+      </div>
+    </div>
   </div>
 
   <script>
-    function generatePreview() {
-      const name = document.getElementById('appName').value || "My Demo App";
-      const desc = document.getElementById('appDesc').value || "This is a demo description for the app. Enter at least 500 words for best preview.";
-      const imgInput = document.getElementById('appImage');
-      let imgURL = "";
+    // ===== UTILITIES ========================================================
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const on = (el, ev, fn) => el.addEventListener(ev, fn);
 
-      if (imgInput.files && imgInput.files[0]) {
-        imgURL = URL.createObjectURL(imgInput.files[0]);
-      } else {
-        imgURL = "https://via.placeholder.com/150";
-      }
+    const state = {
+      step: 0,
+      live: false,
+      data: {
+        appName: "My Demo App",
+        developer: "Shridhar Group of Company",
+        packageId: "com.shridhar.app",
+        category: "Productivity",
+        contentRating: "Rated for 3+",
+        pricing: "free",
+        price: 0,
+        keywords: "notes, vtu, study, offline, pdf",
+        icon: null, // dataURL
+        accent: "#2b7de9",
+        theme: "auto",
+        screenshots: [],
+        shortDesc: "Build, preview, and celebrate your Play Store listing in minutes.",
+        longDesc: "",
+        features: ["Lightning-fast performance","Offline ready","Secure by design","Modern UI with dark mode","Seamless file uploads","One-tap preview"],
+        privacyUrl: "",
+        supportEmail: "",
+        supportPhone: "",
+        website: "",
+        policyText: "",
+        licenseText: "",
+        version: "1.0.0",
+        releaseChannel: "Production",
+        whatsNew: "Initial release with polished UI, enhanced performance, and celebration confetti!",
+        rating: 4.6,
+        downloads: "10K+",
+        reviews: []
+      },
+      history: [],
+      future: []
+    };
 
-      document.getElementById('preview').innerHTML = `
-        <div class="app-header">
-          <img src="${imgURL}" alt="icon" class="app-icon"/>
-          <div>
-            <h2 class="app-title">${name}</h2>
-            <p class="developer">Shridhar Group of Company</p>
-          </div>
-        </div>
-        <p class="rating">⭐ 4.6 • 10K+ Downloads • Rated for 3+</p>
-        <button class="install-btn">Install</button>
-
-        <div class="screenshots">
-          <img src="${imgURL}" alt="screenshot">
-          <img src="${imgURL}" alt="screenshot">
-          <img src="${imgURL}" alt="screenshot">
-        </div>
-
-        <div class="description"><h3>About this app</h3><p>${desc}</p></div>
-
-        <div class="reviews">
-          <h3>Reviews</h3>
-          <div class="review"><strong>Ravi Kumar ⭐⭐⭐⭐⭐</strong> Great app concept! Looks very real on Play Store.</div>
-          <div class="review"><strong>Anjali Sharma ⭐⭐⭐⭐</strong> Impressive demo, makes me want to publish my app.</div>
-          <div class="review"><strong>Mohammed Irfan ⭐⭐⭐⭐⭐</strong> Professional preview, I’ll contact the developer.</div>
-          <div class="review"><strong>Priya Singh ⭐⭐⭐⭐</strong> Clean layout and realistic Play Store look.</div>
-        </div>
-
-        <div class="footer">
-          <p><strong>Developer:</strong> Shridhar Group of Company</p>
-          <p>Email: shridhargroupofcompany2024@gmail.com</p>
-          <p>Phone: 7483640694</p>
-        </div>
-      `;
+    // Simple debounce
+    function debounce(fn, wait=300){
+      let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); };
     }
+
+    // Toast helper
+    const toast = (msg) => {
+      const el = $('#toast');
+      el.textContent = msg;
+      el.style.display = 'block';
+      setTimeout(()=> el.style.display='none', 2000);
+    };
+
+    // Data URI placeholder (SVG gradient)
+    const placeholder = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="#0e1628"/><stop offset="1" stop-color="#1a2b52"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#6a9cf0" font-family="Segoe UI, Arial" font-size="64">ICON</text></svg>`);
+
+    // ===== THEME ============================================================
+    function applyTheme(){
+      const pref = state.data.theme;
+      let light = false;
+      if(pref === 'light') light = true;
+      else if(pref === 'dark') light = false;
+      else light = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      document.documentElement.classList.toggle('light', light);
+      // dynamic brand
+      document.documentElement.style.setProperty('--brand', state.data.accent);
+    }
+
+    // ===== HISTORY (UNDO/REDO) =============================================
+    function snapshot(){
+      state.future.length = 0; // clear redo stack
+      state.history.push(JSON.stringify(state.data));
+      if(state.history.length > 50) state.history.shift();
+    }
+    function undo(){
+      if(!state.history.length) return;
+      state.future.push(JSON.stringify(state.data));
+      const prev = state.history.pop();
+      state.data = JSON.parse(prev);
+      renderAll();
+    }
+    function redo(){
+      if(!state.future.length) return;
+      state.history.push(JSON.stringify(state.data));
+      const next = state.future.pop();
+      state.data = JSON.parse(next);
+      renderAll();
+    }
+
+    // ===== STORAGE ==========================================================
+    const save = debounce(()=>{
+      try {
+        localStorage.setItem('pro_builder_state', JSON.stringify(state.data));
+        $('#saveState').innerHTML = `<span class="chip">Autosaved</span>`;
+      } catch(e) { console.warn('Save failed', e); }
+    }, 600);
+
+    function load(){
+      const raw = localStorage.getItem('pro_builder_state');
+      if(!raw) return;
+      try { state.data = JSON.parse(raw); } catch { /* ignore */ }
+    }
+
+    // ===== IMAGE HELPERS ====================================================
+    function fileToDataURL(file){
+      return new Promise((res, rej)=>{
+        const r = new FileReader();
+        r.onload = () => res(r.result);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+    }
+
+    async function handleIcon(file){
+      snapshot();
+      state.data.icon = await fileToDataURL(file);
+      renderIcon(); save();
+    }
+
+    async function handleScreens(files){
+      snapshot();
+      const max = 8;
+      for(const f of Array.from(files).slice(0, max - state.data.screenshots.length)){
+        const url = await fileToDataURL(f);
+        state.data.screenshots.push(url);
+      }
+      renderScreens(); save();
+    }
+
+    function clearIcon(){ snapshot(); state.data.icon = null; renderIcon(); save(); }
+
+    function removeShot(i){
+      snapshot();
+      state.data.screenshots.splice(i,1);
+      renderScreens(); save();
+    }
+
+    // ===== WIZARD NAV =======================================================
+    function gotoStep(n){
+      state.step = Math.max(0, Math.min(4, n));
+      $$('.step').forEach((s,i)=> s.classList.toggle('active', i===state.step));
+      $$('.step-panel').forEach(p=> p.hidden = Number(p.dataset.step)!==state.step);
+      $('#btnBack').disabled = state.step===0;
+      $('#btnNext').textContent = state.step===4 ? 'Finish' : 'Next ▶';
+      $('#wizardBody').scrollTo({top:0, behavior:'smooth'});
+    }
+
+    // ===== PREVIEW RENDERERS ===============================================
+    function renderHeader(){
+      $('#pvTitle').textContent = state.data.appName || 'My Demo App';
+      $('#pvDev').textContent = state.data.developer || '—';
+      $('#pvAge').textContent = state.data.contentRating || 'Rated for 3+';
+      $('#pvRating').textContent = `⭐ ${Number(state.data.rating||4.6).toFixed(1)}`;
+      $('#pvDownloads').textContent = `${state.data.downloads||'10K+'} downloads`;
+      $('#pvPackage').textContent = state.data.packageId || '—';
+      $('#pvCategory').textContent = state.data.category || '—';
+      $('#pvVersion').textContent = state.data.version || '1.0.0';
+      $('#pvUpdated').textContent = new Date().toLocaleDateString();
+    }
+
+    function renderIcon(){
+      const src = state.data.icon || placeholder;
+      $('#iconImg').src = src;
+      $('#pvIcon').src = src;
+    }
+
+    function renderScreens(){
+      const wrap = $('#pvScreens'); wrap.innerHTML = '';
+      const thumbs = $('#thumbs'); thumbs.innerHTML = '';
+      const arr = state.data.screenshots.length ? state.data.screenshots : [placeholder, placeholder, placeholder];
+      arr.forEach((src,i)=>{
+        const a = document.createElement('div'); a.className='screen';
+        const img = document.createElement('img'); img.src = src; img.alt='Screenshot';
+        a.appendChild(img); wrap.appendChild(a);
+
+        // thumbs
+        const t = document.createElement('div'); t.className='thumb';
+        const ti = document.createElement('img'); ti.src = src; t.appendChild(ti);
+        const x = document.createElement('div'); x.className='x'; x.textContent='✕'; x.title='Remove';
+        on(x,'click',()=> removeShot(i));
+        t.appendChild(x); thumbs.appendChild(t);
+      });
+    }
+
+    function wordCount(s){ return (s||'').trim().split(/\s+/).filter(Boolean).length; }
+
+    function renderDesc(){
+      const d = state.data.longDesc || state.data.shortDesc || '';
+      $('#pvDesc').textContent = d;
+      $('#descCount').textContent = `${wordCount(state.data.longDesc)} words`;
+    }
+
+    function renderFeatures(){
+      const ul = $('#pvFeatures'); ul.innerHTML='';
+      (state.data.features||[]).forEach(f=>{
+        const li = document.createElement('li'); li.textContent = f; ul.appendChild(li);
+      });
+      const tags = $('#pvTags'); tags.innerHTML='';
+      (state.data.keywords||'').split(',').map(s=>s.trim()).filter(Boolean).slice(0,8).forEach(k=>{
+        const span = document.createElement('span'); span.className='chip'; span.textContent = k; tags.appendChild(span);
+      });
+    }
+
+    function renderAbout(){
+      $('#pvWebsite').textContent = state.data.website||'—';
+      $('#pvEmail').textContent = state.data.supportEmail||'—';
+      $('#pvPhone').textContent = state.data.supportPhone||'—';
+      $('#pvPrivacy').textContent = state.data.privacyUrl|| (state.data.policyText? 'Included below' : '—');
+    }
+
+    function renderWhatsNew(){ $('#pvWhatsNew').textContent = state.data.whatsNew || '—'; }
+
+    function renderReviews(){
+      const wrap = $('#pvReviews'); wrap.innerHTML='';
+      (state.data.reviews||[]).forEach(r=>{
+        const row = document.createElement('div'); row.className='review';
+        const av = document.createElement('div'); av.className='avatar'; av.textContent = r.user.split(' ').map(x=>x[0]).join('').slice(0,3).toUpperCase();
+        const body = document.createElement('div');
+        body.innerHTML = `<strong>${r.user} — ${'⭐'.repeat(Math.round(r.stars))}</strong><div>${r.text}</div>`;
+        row.appendChild(av); row.appendChild(body); wrap.appendChild(row);
+      });
+    }
+
+    function renderAll(){
+      applyTheme();
+      renderHeader();
+      renderIcon();
+      renderScreens();
+      renderDesc();
+      renderFeatures();
+      renderAbout();
+      renderWhatsNew();
+      renderReviews();
+      if(state.live) toast('Live preview updated');
+      save();
+    }
+
+    // ===== AUTO TEXT GENERATORS ============================================
+    function autoExpandDescription(){
+      const base = state.data.longDesc || state.data.shortDesc || `Introducing ${state.data.appName}, built by ${state.data.developer}.`;
+      const bulletz = (state.data.features||[]).slice(0,8).map(f=>`• ${f}`).join('\n');
+      const extra = `\n\nWhy you'll love it\n${bulletz}\n\nPrivacy & Security\nWe respect your data. ${state.data.appName} stores as little as possible on-device. Optional cloud sync keeps your content safe without tracking.\n\nPerformance\nOpen instantly, browse smoothly, and enjoy an app optimized for low-end devices as well as flagships. Offline-first ensures you stay productive anywhere.\n\nBuilt for everyone\nLocalization-ready, accessible UI, and thoughtful defaults. Dark mode included.\n\nCrafted in India by ${state.data.developer}.`;
+      const composed = (base + extra).trim();
+      snapshot();
+      state.data.longDesc = composed;
+      renderDesc(); save();
+    }
+
+    function formatPolish(){
+      const txt = (state.data.longDesc||'').split('\n').map(s=> s.replace(/\s+/g,' ').trim()).filter(Boolean).join('\n\n');
+      snapshot(); state.data.longDesc = txt; renderDesc(); save();
+    }
+
+    function genPolicy(){
+      const name = state.data.appName || 'This App';
+      const email = state.data.supportEmail || 'support@example.com';
+      const url = state.data.website || 'https://example.com';
+      const text = `${name} Privacy Policy\n\nWe collect minimal information to provide core functionality. No personal data is sold. You may request data deletion anytime by contacting ${email}.\n\nData We Collect\n• App diagnostics and crash logs (anonymous)\n• Optional account data you explicitly provide\n\nHow We Use Data\n• Improve performance and reliability\n• Provide customer support\n\nStorage & Security\nAll data is transmitted over HTTPS and stored securely. Offline data remains on your device.\n\nContact\nWebsite: ${url}\nSupport: ${email}`;
+      snapshot(); state.data.policyText = text; $('#policyText').value = text; save();
+    }
+
+    function genLicense(){
+      const dev = state.data.developer || 'The Developer';
+      const text = `License Summary\n\nCopyright © ${new Date().getFullYear()} ${dev}. All rights reserved.\n\nYou may use this application in accordance with the End User License Agreement. Redistribution or reverse engineering is prohibited unless permitted by law.`;
+      snapshot(); state.data.licenseText = text; $('#licenseText').value = text; save();
+    }
+
+    // ===== REVIEWS ==========================================================
+    const sampleUsers = ['Ravi Kumar','Anjali Sharma','Mohammed Irfan','Priya Singh','Neha Verma','Arjun Patil','Sneha R','Karthik','Ayesha B','Rohit Mehta'];
+    const sampleLines = [
+      'Super smooth and professional. Feels like a real Play Store page!',
+      'Dark mode looks fantastic and the screenshots pop.',
+      'Exactly what I needed to pitch the app to investors.',
+      'Clean UI, clear descriptions, and fast preview updates.',
+      'The confetti party on publish is 🔥',
+      'Smart features like autosave and JSON export saved me time.',
+      'Love the offline-first approach. Keep it up!',
+      'Great for students and teams building MVPs.',
+      'Neat wizard and the feature list editor is intuitive.',
+      'It just works. Highly recommend.'
+    ];
+
+    function genReviews(){
+      const out = [];
+      for(let i=0;i<6;i++){
+        out.push({ user: sampleUsers[i%sampleUsers.length], stars: (Math.random()*0.7)+4.2, text: sampleLines[(Math.random()*sampleLines.length)|0] });
+      }
+      snapshot(); state.data.reviews = out; renderReviews(); save(); toast('Reviews generated');
+    }
+
+    // ===== INSTALL (FAKE) ===================================================
+    on($('#btnInstall'),'click',()=> toast('This is a demo preview. Install is disabled.'));
+
+    // ===== TABS =============================================================
+    $$('.tab').forEach(t => on(t,'click',()=>{
+      $$('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      const tab = t.dataset.tab;
+      $$('[data-tabpanel]').forEach(p=> p.hidden = (p.dataset.tabpanel!==tab));
+    }));
+
+    // ===== EVENTS: WIZARD INPUTS ===========================================
+    function bindInput(id, key){
+      const el = $(id);
+      if(!el) return;
+      const handler = ()=>{ snapshot(); state.data[key] = el.value; if(state.live) renderAll(); save(); };
+      on(el,'input', handler);
+      on(el,'change', handler);
+    }
+
+    bindInput('#appName','appName');
+    bindInput('#developer','developer');
+    bindInput('#packageId','packageId');
+    bindInput('#category','category');
+    bindInput('#contentRating','contentRating');
+    bindInput('#pricing','pricing');
+    bindInput('#price','price');
+    bindInput('#keywords','keywords');
+    bindInput('#shortDesc','shortDesc');
+    bindInput('#longDesc','longDesc');
+    bindInput('#privacyUrl','privacyUrl');
+    bindInput('#supportEmail','supportEmail');
+    bindInput('#supportPhone','supportPhone');
+    bindInput('#website','website');
+    bindInput('#policyText','policyText');
+    bindInput('#licenseText','licenseText');
+    bindInput('#version','version');
+    bindInput('#releaseChannel','releaseChannel');
+    bindInput('#whatsNew','whatsNew');
+
+    on($('#accent'),'input',()=>{ snapshot(); state.data.accent = $('#accent').value; applyTheme(); save(); });
+    on($('#theme'),'change',()=>{ snapshot(); state.data.theme = $('#theme').value; applyTheme(); save(); });
+
+    on($('#rating'),'input',()=>{
+      const v = Number($('#rating').value).toFixed(1);
+      $('#ratingVal').textContent = v; snapshot(); state.data.rating = Number(v); renderHeader(); save();
+    });
+
+    // Features
+    on($('#btnAddFeature'),'click',()=>{
+      const f = $('#featureInput').value.trim(); if(!f) return;
+      snapshot(); state.data.features.push(f); $('#featureInput').value=''; renderFeatures(); save();
+    });
+    on($('#btnClearFeatures'),'click',()=>{ snapshot(); state.data.features = []; renderFeatures(); save(); });
+    on($('#btnShuffle'),'click',()=>{ snapshot(); state.data.features.sort(()=>Math.random()-.5); renderFeatures(); save(); });
+
+    // Desc helpers
+    on($('#btnGenDesc'),'click', autoExpandDescription);
+    on($('#btnFormat'),'click', formatPolish);
+
+    // Policy/License
+    on($('#btnGenPolicy'),'click', genPolicy);
+    on($('#btnGenLicense'),'click', genLicense);
+
+    // Screenshots & Icon inputs
+    on($('#iconInput'),'change', async (e)=>{ if(e.target.files[0]) await handleIcon(e.target.files[0]); });
+    on($('#shotsInput'),'change', async (e)=>{ if(e.target.files.length) await handleScreens(e.target.files); });
+
+    // Drag & drop
+    function setupDrop(zone, onFiles){
+      ;['dragenter','dragover'].forEach(ev=> on(zone, ev, (e)=>{ e.preventDefault(); zone.classList.add('drag'); }));
+      ;['dragleave','drop'].forEach(ev=> on(zone, ev, (e)=>{ e.preventDefault(); zone.classList.remove('drag'); }));
+      on(zone,'drop',(e)=>{ const files = e.dataTransfer.files; if(files && files.length) onFiles(files); });
+    }
+    setupDrop($('#iconDrop'), (files)=> handleIcon(files[0]));
+    setupDrop($('#shotsDrop'), (files)=> handleScreens(files));
+
+    on($('#btnIconClear'),'click', clearIcon);
+    on($('#btnIconCrop'),'click', ()=>{ toast('Auto-fit applied'); /* Simplified: rely on CSS object-fit */ });
+
+    // Wizard nav
+    on($('#btnNext'),'click',()=> gotoStep(state.step+1));
+    on($('#btnBack'),'click',()=> gotoStep(state.step-1));
+
+    // Live / Preview
+    on($('#btnPreview'),'click', ()=>{ state.live = false; renderAll(); toast('Preview generated'); });
+    on($('#btnLivePreview'),'click', ()=>{ state.live = !state.live; $('#btnLivePreview').classList.toggle('primary', state.live); toast(state.live? 'Live sync ON' : 'Live sync OFF'); if(state.live) renderAll(); });
+
+    // Import / Export / Print
+    on($('#btnExport'),'click', ()=>{
+      const blob = new Blob([JSON.stringify(state.data, null, 2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${(state.data.appName||'app').toLowerCase().replace(/\s+/g,'-')}-listing.json`; a.click();
+    });
+    on($('#btnImport'),'click', ()=>{
+      const i = document.createElement('input'); i.type='file'; i.accept='application/json'; i.onchange = async ()=>{
+        const f = i.files[0]; if(!f) return; const txt = await f.text();
+        try { snapshot(); state.data = JSON.parse(txt); renderAll(); toast('Imported'); } catch { toast('Invalid JSON'); }
+      }; i.click();
+    });
+    on($('#btnPrint'),'click', ()=> window.print());
+
+    // Undo/Redo
+    on($('#btnUndo'),'click', undo);
+    on($('#btnRedo'),'click', redo);
+    on(document,'keydown',(e)=>{
+      if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='z'){ e.preventDefault(); undo(); }
+      if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='y'){ e.preventDefault(); redo(); }
+    });
+
+    // Clear All
+    on($('#btnClearAll'),'click', ()=>{
+      if(!confirm('Clear all fields?')) return;
+      snapshot();
+      const keep = {theme: state.data.theme, accent: state.data.accent};
+      Object.assign(state.data, JSON.parse(JSON.stringify({
+        appName: '', developer: '', packageId: '', category: 'Productivity', contentRating: 'Rated for 3+', pricing: 'free', price: 0, keywords: '', icon: null, accent: keep.accent, theme: keep.theme, screenshots: [], shortDesc: '', longDesc: '', features: [], privacyUrl: '', supportEmail: '', supportPhone: '', website: '', policyText: '', licenseText: '', version: '1.0.0', releaseChannel: 'Production', whatsNew: '', rating: 4.6, downloads: '10K+', reviews: []
+      })));
+      renderAll();
+      toast('Cleared');
+    });
+
+    // ===== CONFETTI (Party Blast) ==========================================
+    const confetti = (function(){
+      const canvas = document.getElementById('confetti');
+      const ctx = canvas.getContext('2d');
+      let W, H, RAF, pieces=[];
+      function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+      window.addEventListener('resize', resize); resize();
+      function makePiece(){
+        return {
+          x: Math.random()*W,
+          y: -20 - Math.random()*H*0.3,
+          r: 4+Math.random()*6,
+          c: `hsl(${Math.random()*360},90%,60%)`,
+          s: 1+Math.random()*2,
+          a: Math.random()*Math.PI,
+          va: (Math.random()-.5)*0.2
+        };
+      }
+      function launch(count=220){ pieces = Array.from({length:count}, makePiece); if(!RAF) tick(); }
+      function tick(){
+        ctx.clearRect(0,0,W,H);
+        pieces.forEach(p=>{
+          p.y += p.s*2; p.x += Math.sin(p.a)*1.5; p.a += p.va; p.s *= 0.998;
+          ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a); ctx.fillStyle=p.c; ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r); ctx.restore();
+        });
+        pieces = pieces.filter(p=> p.y < H+20);
+        if(pieces.length){ RAF = requestAnimationFrame(tick); } else { cancelAnimationFrame(RAF); RAF=null; }
+      }
+      return { launch };
+    })();
+
+    // ===== PUBLISH FLOW =====================================================
+    function validateAll(){
+      const errs = [];
+      if(!state.data.appName) errs.push('App name is required');
+      if(!state.data.developer) errs.push('Developer name is required');
+      if(!state.data.shortDesc) errs.push('Short description is required');
+      if(wordCount(state.data.longDesc) < 60) errs.push('Long description should be at least 60 words');
+      if(state.data.screenshots.length < 3) errs.push('Add at least 3 screenshots');
+      return errs;
+    }
+
+    on($('#btnPublish'),'click', ()=>{
+      const errs = validateAll();
+      if(errs.length){ alert('Fix these before publishing:\n\n- ' + errs.join('\n- ')); return; }
+      confetti.launch(360);
+      $('#partyModal').style.display = 'flex';
+    });
+
+    on($('#btnCloseParty'),'click', ()=> $('#partyModal').style.display='none');
+
+    // Share screenshot (simple: copy preview area as image via HTML2Canvas would be ideal; here we fallback to prompt)
+    on($('#btnShare'),'click', ()=>{
+      toast('Use your OS screenshot tool to capture the preview and share!');
+    });
+
+    // ===== INIT =============================================================
+    function hydrateForm(){
+      $('#appName').value = state.data.appName;
+      $('#developer').value = state.data.developer;
+      $('#packageId').value = state.data.packageId;
+      $('#category').value = state.data.category;
+      $('#contentRating').value = state.data.contentRating;
+      $('#pricing').value = state.data.pricing;
+      $('#price').value = state.data.price;
+      $('#keywords').value = state.data.keywords;
+      $('#shortDesc').value = state.data.shortDesc;
+      $('#longDesc').value = state.data.longDesc;
+      $('#privacyUrl').value = state.data.privacyUrl;
+      $('#supportEmail').value = state.data.supportEmail;
+      $('#supportPhone').value = state.data.supportPhone;
+      $('#website').value = state.data.website;
+      $('#policyText').value = state.data.policyText;
+      $('#licenseText').value = state.data.licenseText;
+      $('#version').value = state.data.version;
+      $('#releaseChannel').value = state.data.releaseChannel;
+      $('#whatsNew').value = state.data.whatsNew;
+      $('#rating').value = state.data.rating; $('#ratingVal').textContent = Number(state.data.rating).toFixed(1);
+      $('#accent').value = state.data.accent;
+      $('#theme').value = state.data.theme;
+
+      renderAll();
+    }
+
+    on($('#modeToggle'),'click', ()=>{
+      const isLight = document.documentElement.classList.toggle('light');
+      $('#modeToggle').textContent = isLight ? '☀️ Light' : '🌙 Dark';
+    });
+
+    // Load + hydrate
+    load();
+    hydrateForm();
+    gotoStep(0);
   </script>
 </body>
 </html>
