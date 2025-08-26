@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App Builder Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 0;
+      display: flex;
+      flex-direction: row;
+      min-height: 100vh;
+    }
+    .form-section {
+      width: 35%;
+      padding: 20px;
+      background: #f4f4f4;
+      overflow-y: auto;
+    }
+    .preview-section {
+      flex: 1;
+      padding: 20px;
+      background: #fff;
+      overflow-y: auto;
+      border-left: 2px solid #ddd;
+    }
+    label { display: block; margin: 10px 0 5px; font-weight: bold; }
+    input, textarea {
+      width: 100%; padding: 8px;
+      margin-bottom: 15px; border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 15px;
+      background: #2b7de9; color: #fff;
+      border: none; border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover { background: #135abe; }
+
+    /* Preview styling */
+    .app-header { display: flex; align-items: center; }
+    .app-icon {
+      width: 80px; height: 80px;
+      background: #ddd; border-radius: 20px;
+      margin-right: 15px;
+      object-fit: cover;
+    }
+    .app-title { font-size: 1.5em; margin: 0; }
+    .developer { color: #666; font-size: 0.9em; }
+    .rating { margin: 10px 0; font-size: 0.9em; color: #444; }
+    .screenshots { display: flex; gap: 10px; margin: 15px 0; }
+    .screenshots img {
+      width: 30%; border-radius: 10px;
+      border: 1px solid #ddd;
+    }
+    .description { margin-top: 15px; line-height: 1.5; }
+    .install-btn {
+      background: #2b7de9; padding: 12px 25px;
+      color: #fff; border: none;
+      border-radius: 8px; font-weight: bold;
+      cursor: not-allowed;
+    }
+    .reviews { margin-top: 20px; }
+    .review { border-bottom: 1px solid #eee; padding: 10px 0; }
+    .review strong { display: block; }
+    .footer {
+      margin-top: 30px;
+      font-size: 0.9em;
+      color: #555;
+      padding-top: 15px;
+      border-top: 2px solid #ddd;
+    }
+
+    /* Responsive */
+    @media(max-width: 768px) {
+      body { flex-direction: column; }
+      .form-section, .preview-section { width: 100%; border-left: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="form-section">
+    <h2>Build Your Demo App</h2>
+    <label>App Name</label>
+    <input type="text" id="appName" placeholder="Enter app name" />
+
+    <label>Upload App Icon / Screenshot</label>
+    <input type="file" id="appImage" accept="image/*" />
+
+    <label>App Description (500 words)</label>
+    <textarea id="appDesc" rows="8" placeholder="Enter app description"></textarea>
+
+    <button onclick="generatePreview()">Generate Preview</button>
+  </div>
+
+  <div class="preview-section" id="preview">
+    <p><i>Fill the form to see Play Store preview here...</i></p>
+  </div>
+
+  <script>
+    function generatePreview() {
+      const name = document.getElementById('appName').value || "My Demo App";
+      const desc = document.getElementById('appDesc').value || "This is a demo description for the app. Enter at least 500 words for best preview.";
+      const imgInput = document.getElementById('appImage');
+      let imgURL = "";
+
+      if (imgInput.files && imgInput.files[0]) {
+        imgURL = URL.createObjectURL(imgInput.files[0]);
+      } else {
+        imgURL = "https://via.placeholder.com/150";
+      }
+
+      document.getElementById('preview').innerHTML = `
+        <div class="app-header">
+          <img src="${imgURL}" alt="icon" class="app-icon"/>
+          <div>
+            <h2 class="app-title">${name}</h2>
+            <p class="developer">Shridhar Group of Company</p>
+          </div>
+        </div>
+        <p class="rating">⭐ 4.6 • 10K+ Downloads • Rated for 3+</p>
+        <button class="install-btn">Install</button>
+
+        <div class="screenshots">
+          <img src="${imgURL}" alt="screenshot">
+          <img src="${imgURL}" alt="screenshot">
+          <img src="${imgURL}" alt="screenshot">
+        </div>
+
+        <div class="description"><h3>About this app</h3><p>${desc}</p></div>
+
+        <div class="reviews">
+          <h3>Reviews</h3>
+          <div class="review"><strong>Ravi Kumar ⭐⭐⭐⭐⭐</strong> Great app concept! Looks very real on Play Store.</div>
+          <div class="review"><strong>Anjali Sharma ⭐⭐⭐⭐</strong> Impressive demo, makes me want to publish my app.</div>
+          <div class="review"><strong>Mohammed Irfan ⭐⭐⭐⭐⭐</strong> Professional preview, I’ll contact the developer.</div>
+          <div class="review"><strong>Priya Singh ⭐⭐⭐⭐</strong> Clean layout and realistic Play Store look.</div>
+        </div>
+
+        <div class="footer">
+          <p><strong>Developer:</strong> Shridhar Group of Company</p>
+          <p>Email: shridhargroupofcompany2024@gmail.com</p>
+          <p>Phone: 7483640694</p>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
